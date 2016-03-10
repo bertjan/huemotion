@@ -93,7 +93,7 @@ public class LeapMotionDemo {
 
             Integer brightness = Float.valueOf(yPos/2).intValue();
             if (brightness < 0) brightness = 0;
-            if (brightness > 255) brightness = 255;
+            if (brightness > 254) brightness = 254;
 
             int centerThreshold = 60;
             if (xPos < -centerThreshold) {
@@ -103,7 +103,6 @@ public class LeapMotionDemo {
                     api.turnOff(center);
                     api.turnOff(right);
                 }
-                api.setBrightness(left, brightness);
             } else if (xPos >= -centerThreshold && xPos <= centerThreshold) {
                 if (!api.isOn(center)) {
                     log("center");
@@ -111,7 +110,6 @@ public class LeapMotionDemo {
                     api.turnOff(left);
                     api.turnOff(right);
                 }
-                api.setBrightness(center, brightness);
             } else {
                 if (!api.isOn(right)) {
                     log("right");
@@ -119,8 +117,10 @@ public class LeapMotionDemo {
                     api.turnOff(center);
                     api.turnOff(left);
                 }
-                api.setBrightness(right, brightness);
             }
+            log("brightness " + brightness);
+            api.setBrightness(left, brightness);
+
 
         }
     }
