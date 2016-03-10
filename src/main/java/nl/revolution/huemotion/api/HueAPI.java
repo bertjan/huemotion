@@ -83,6 +83,25 @@ public class HueAPI {
         bridge.updateLightState(light, newState, new LoggingLightListener());
     }
 
+
+    public boolean isOn(PHLight light) {
+        return light.getLastKnownLightState().isOn();
+    }
+
+    public void setBrightness(PHLight light, Integer brightness) {
+        PHLightState lightState = light.getLastKnownLightState();
+        if (!lightState.isReachable()) {
+            throw new IllegalStateException("Light found but not reachable.");
+        }
+
+        PHLightState newState = new PHLightState();
+        newState.setOn(true);
+        newState.setTransitionTime(0);
+        newState.setBrightness(brightness);
+        bridge.updateLightState(light, newState, new LoggingLightListener());
+
+    }
+
     public void turnOff(PHLight light) {
         setLightState(light.getName(), false, 0);
     }
