@@ -17,7 +17,7 @@ public class HueAPIDemo {
     private void doDemo() {
         HueAPI api = new HueAPI();
 
-        // Logs all bridges in the network.
+        // Log all bridges in the network.
         // api.findBridges();
 
         api.connectToBridge(BridgeAuth.BRIDGE_ID, BridgeAuth.BRIDGE_USERNAME);

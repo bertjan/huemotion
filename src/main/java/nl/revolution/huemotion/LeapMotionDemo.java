@@ -1,13 +1,10 @@
 package nl.revolution.huemotion;
 
 import com.leapmotion.leap.*;
-import com.philips.lighting.model.PHLight;
 import nl.revolution.huemotion.api.BridgeAuth;
 import nl.revolution.huemotion.api.HueAPI;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.List;
 
 public class LeapMotionDemo {
 
@@ -27,6 +24,7 @@ public class LeapMotionDemo {
         api.connectToBridge(BridgeAuth.BRIDGE_ID, BridgeAuth.BRIDGE_USERNAME);
         log("Connected to bridge.");
 
+        // Turn all reachable lights off.
         api.getReachableLights().forEach(light -> {
             log("Found reachable light: " + light.getName());
             api.turnOff(light);
@@ -63,68 +61,29 @@ public class LeapMotionDemo {
         public void onFrame(Controller controller) {
             // only get frames every n milliseconds, to prevent overloading the hue api.
             long currentTime = System.currentTimeMillis();
-            if (currentTime - lastTimestamp < 100) {
+            if (currentTime - lastTimestamp < 350) {
                 return;
             }
 
             lastTimestamp = currentTime;
-
-            PHLight left = api.getReachableLights().stream().filter(light -> light.getName().equals("Hue Lamp 5")).findFirst().get();
-            PHLight center = api.getReachableLights().stream().filter(light -> light.getName().equals("Hue Lamp 3")).findFirst().get();
-            PHLight right = api.getReachableLights().stream().filter(light -> light.getName().equals("Hue Lamp 4")).findFirst().get();
-
-            List<PHLight> lights = Arrays.asList(left, center, right);
-
             Frame frame = controller.frame();
             Vector palmPosition = frame.hands().leftmost().palmPosition();
 
+            // When no hand is in sight, turn off all reachable lights that are on and stop processing.
             if (frame.hands().count() == 0) {
-                lights.forEach(light -> {
-                    if (api.isOn(light)) {
-                        log("off");
-                        api.turnOff(light);
-                    }
-                });
+                api.getReachableLights().stream()
+                        .filter(light -> api.isOn(light))
+                        .forEach(light -> api.turnOff(light));
                 return;
             }
 
-            float xPos = palmPosition.getX();
-            float yPos = palmPosition.getY();
+            // Translate hand height to brightness between 0 and 254.
+            float handHeight = palmPosition.getY();
+            final int brightness = Math.max(Math.min(Float.valueOf(handHeight/2).intValue(), 254), 0);
 
-            Integer brightness = Float.valueOf(yPos/2).intValue();
-            if (brightness < 0) brightness = 0;
-            if (brightness > 254) brightness = 254;
-
-            int centerThreshold = 60;
-            if (xPos < -centerThreshold) {
-                if (!api.isOn(left)) {
-                    log("left");
-                    api.turnOn(left);
-                    api.turnOff(center);
-                    api.turnOff(right);
-                }
-                api.setBrightness(left, brightness);
-            } else if (xPos >= -centerThreshold && xPos <= centerThreshold) {
-                if (!api.isOn(center)) {
-                    log("center");
-                    api.turnOn(center);
-                    api.turnOff(left);
-                    api.turnOff(right);
-                }
-                api.setBrightness(center, brightness);
-
-            } else {
-                if (!api.isOn(right)) {
-                    log("right");
-                    api.turnOn(right);
-                    api.turnOff(center);
-                    api.turnOff(left);
-                }
-                api.setBrightness(right, brightness);
-            }
-            log("brightness " + brightness);
-
-
+            // Set brightness for all reachable lights.
+            log("brightness: " + brightness);
+            api.getReachableLights().forEach(light -> api.setBrightness(light, brightness));
         }
     }
 
